@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useProducts, useCategories, useCreateProduct, useUpdateProduct, useDeleteProduct } from '@/hooks/useProducts';
 import { useAllOrders, useUpdateOrderStatus, useUpdatePaymentStatus } from '@/hooks/useOrders';
 import { Button } from '@/components/ui/button';
-import { Package, ShoppingCart, DollarSign, Clock, CheckCircle, XCircle, Plus, Pencil, Trash2, X } from 'lucide-react';
+import { Package, ShoppingCart, DollarSign, Clock, CheckCircle, XCircle, Plus, Pencil, Trash2, X, Upload, Image } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 const Admin = () => {
   const { user, isAdmin, loading } = useAuth();
@@ -21,6 +22,10 @@ const Admin = () => {
   const [tab, setTab] = useState<'overview' | 'orders' | 'products'>('overview');
   const [showProductForm, setShowProductForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>('');
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [productForm, setProductForm] = useState({
     name: '', price: '', original_price: '', description: '', image: '', category_id: '', in_stock: true,
   });
@@ -35,6 +40,32 @@ const Admin = () => {
     setProductForm({ name: '', price: '', original_price: '', description: '', image: '', category_id: '', in_stock: true });
     setShowProductForm(false);
     setEditingProduct(null);
+    setImageFile(null);
+    setImagePreview('');
+  };
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      toast({ title: 'Error', description: 'Please select an image file.', variant: 'destructive' });
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: 'Error', description: 'Image must be under 5MB.', variant: 'destructive' });
+      return;
+    }
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  };
+
+  const uploadImage = async (file: File): Promise<string> => {
+    const ext = file.name.split('.').pop();
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${ext}`;
+    const { error } = await supabase.storage.from('product-images').upload(fileName, file);
+    if (error) throw error;
+    const { data: urlData } = supabase.storage.from('product-images').getPublicUrl(fileName);
+    return urlData.publicUrl;
   };
 
   const handleEditProduct = (p: typeof products[0]) => {
@@ -45,6 +76,8 @@ const Admin = () => {
     });
     setEditingProduct(p.id);
     setShowProductForm(true);
+    setImageFile(null);
+    setImagePreview(p.image !== '/placeholder.svg' ? p.image : '');
   };
 
   const handleSaveProduct = async () => {
@@ -52,16 +85,21 @@ const Admin = () => {
       toast({ title: 'Error', description: 'Name and price are required.', variant: 'destructive' });
       return;
     }
-    const payload = {
-      name: productForm.name,
-      price: Number(productForm.price),
-      original_price: productForm.original_price ? Number(productForm.original_price) : null,
-      description: productForm.description || null,
-      image: productForm.image || null,
-      category_id: productForm.category_id || null,
-      in_stock: productForm.in_stock,
-    };
     try {
+      setUploading(true);
+      let imageUrl = productForm.image || null;
+      if (imageFile) {
+        imageUrl = await uploadImage(imageFile);
+      }
+      const payload = {
+        name: productForm.name,
+        price: Number(productForm.price),
+        original_price: productForm.original_price ? Number(productForm.original_price) : null,
+        description: productForm.description || null,
+        image: imageUrl,
+        category_id: productForm.category_id || null,
+        in_stock: productForm.in_stock,
+      };
       if (editingProduct) {
         await updateProduct.mutateAsync({ id: editingProduct, ...payload });
         toast({ title: 'Product updated!' });
@@ -72,6 +110,8 @@ const Admin = () => {
       resetForm();
     } catch (e: any) {
       toast({ title: 'Error', description: e.message, variant: 'destructive' });
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -199,9 +239,22 @@ const Admin = () => {
                     className="w-full border border-input rounded-lg px-3 py-2 bg-background text-sm" />
                 </div>
                 <div className="sm:col-span-2">
-                  <label className="text-sm font-medium mb-1 block">Image URL</label>
-                  <input value={productForm.image} onChange={e => setProductForm(f => ({ ...f, image: e.target.value }))}
-                    className="w-full border border-input rounded-lg px-3 py-2 bg-background text-sm" />
+                  <label className="text-sm font-medium mb-1 block">Product Image</label>
+                  <input type="file" ref={fileInputRef} accept="image/*" onChange={handleImageSelect} className="hidden" />
+                  <div className="flex items-center gap-4">
+                    {(imagePreview || productForm.image) && (
+                      <img src={imagePreview || productForm.image} alt="Preview" className="w-16 h-16 object-cover rounded border border-border" />
+                    )}
+                    <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                      <Upload className="h-4 w-4 mr-2" />
+                      {imageFile ? imageFile.name : 'Choose Image'}
+                    </Button>
+                    {imageFile && (
+                      <button onClick={() => { setImageFile(null); setImagePreview(''); }} className="text-muted-foreground hover:text-destructive">
+                        <X className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <div className="sm:col-span-2">
                   <label className="text-sm font-medium mb-1 block">Description</label>
@@ -214,8 +267,8 @@ const Admin = () => {
                 </div>
               </div>
               <div className="mt-4 flex gap-2">
-                <Button onClick={handleSaveProduct} disabled={createProduct.isPending || updateProduct.isPending}>
-                  {editingProduct ? 'Update Product' : 'Create Product'}
+                <Button onClick={handleSaveProduct} disabled={uploading || createProduct.isPending || updateProduct.isPending}>
+                  {uploading ? 'Uploading...' : editingProduct ? 'Update Product' : 'Create Product'}
                 </Button>
                 <Button variant="outline" onClick={resetForm}>Cancel</Button>
               </div>
