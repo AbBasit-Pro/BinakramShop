@@ -12,7 +12,7 @@ import { Navigation, Pagination, Autoplay } from "swiper/modules";
 // ✅ YOUR LOCAL IMAGES
 import kurta1 from "@/assets/men1.jpg";
 import kurta2 from "@/assets/cotten-6.jpeg";
-import shalwar from "@/assets/women2.jpg";
+import shalwar from "@/assets/Women2.jpg";
 import eid from "@/assets/sale3.jpg";
 
 const HeroSlider = () => {
