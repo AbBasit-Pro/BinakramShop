@@ -1,0 +1,95 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 99%;
+    --foreground: 150 10% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 150 10% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 150 10% 10%;
+
+    --primary: 142 72% 29%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 43 96% 56%;
+    --secondary-foreground: 150 10% 10%;
+
+    --muted: 140 20% 96%;
+    --muted-foreground: 150 5% 45%;
+
+    --accent: 43 96% 56%;
+    --accent-foreground: 150 10% 10%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 140 15% 90%;
+    --input: 140 15% 90%;
+    --ring: 142 72% 29%;
+
+    --radius: 0.75rem;
+
+    --success: 142 72% 40%;
+    --success-foreground: 0 0% 100%;
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 142 72% 29%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 140 20% 96%;
+    --sidebar-accent-foreground: 150 10% 10%;
+    --sidebar-border: 140 15% 90%;
+    --sidebar-ring: 142 72% 29%;
+  }
+
+  .dark {
+    --background: 150 10% 6%;
+    --foreground: 0 0% 95%;
+    --card: 150 10% 8%;
+    --card-foreground: 0 0% 95%;
+    --popover: 150 10% 8%;
+    --popover-foreground: 0 0% 95%;
+    --primary: 142 72% 40%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 43 80% 50%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 150 10% 15%;
+    --muted-foreground: 150 5% 60%;
+    --accent: 43 80% 50%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 0 0% 95%;
+    --border: 150 10% 18%;
+    --input: 150 10% 18%;
+    --ring: 142 72% 40%;
+    --sidebar-background: 150 10% 8%;
+    --sidebar-foreground: 0 0% 90%;
+    --sidebar-primary: 142 72% 40%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 150 10% 15%;
+    --sidebar-accent-foreground: 0 0% 90%;
+    --sidebar-border: 150 10% 18%;
+    --sidebar-ring: 142 72% 40%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Poppins', sans-serif;
+  }
+}
